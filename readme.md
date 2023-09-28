@@ -19,13 +19,13 @@ Most of the analysis were performed on bash environment. For this study, we will
 - [PCAngsd - software](http://www.popgen.dk/software/index.php/PCAngsd)
 - ngsParalog 
 
-### Reference Genome
+## Reference Genome
 
 I used *Ursus americanus* (American black bear) reference genome as link below. ASM334442v1_HiC.fasta.gz is the file that I used for alignment (Dudchenko et al., 2017; Dudchenko et al., 2018; Srivastava et al., 2019).
 
 https://www.dnazoo.org/assemblies/Ursus_americanus
 
-### World Brown Bears
+## World Brown Bears
 
 I added the bear sequence data from different studies. 
 
@@ -242,6 +242,135 @@ k6plot = ggplot(ad_k6, aes(x=Ind, y=value, fill = variable, group=Order)) + geom
 k6plot
 ```
 
+## Genetic diversity analysis
+
+```ruby
+# Calculate saf files and the ML estimate of the sfs using the EM algorithm for each population
+# Populations used as bamlist are Europe, Apennine, Turkey, Georgia, Alaska, Russia
+
+# First perform sfs to be used in diversity analysis
+~/bin/angsd/angsd -b ${pop}.bamlist -ref UrsMar_ASM334442v1_HiC_zoo.fasta -anc UrsMar_ASM334442v1_HiC_zoo.fasta -out results_sfs/${pop} -GL 1 -doSaf 1 -minMapQ 10 -minQ 20 -nThreads 8 -sites results_paralog/btr.site.list -uniqueOnly 1 -remove_bads 1 -only_proper_pairs 1 -baq 2
+~/bin/angsd/misc/realSFS results_sfs/${pop}.saf.idx -maxIter 100 -P 8 > results_sfs/${pop}.sfs
+# Estimate the site allele frequency likelihood
+~/bin/angsd/angsd -bam ${pop}.bamlist -out results_diversity/${pop} -ref UrsMar_ASM334442v1_HiC_zoo.fasta -anc UrsMar_ASM334442v1_HiC_zoo.fasta -GL 1 -doThetas 1 -doSaf 1 -pest results_sfs/${pop}.sfs -minMapQ 10 -minQ 20 -nThreads 8 -only_proper_pairs 1 -sites results_paralog/btr.site.list
+#Estimate Tajimas D and other statistics for each scaffold
+~/bin/angsd/misc/thetaStat do_stat results_diversity/${pop}.thetas.idx -outnames results_diversity/${pop}.thetas
+# Calculate diversity statistics with window scan
+~/bin/angsd/misc/thetaStat do_stat results_diversity/${pop}.thetas.idx -outnames results_diversity/${pop}_50kb.thetas -win 50000 -step 25000
+```
+
+Using python, the obtained file was divided to each scaffolds.
+
+'all_50scaf_tw.txt' file looks like: (tw/nsites)
+
+TURKEY_sc	TURKEY_tw	ALASKA_sc	ALASKA_tw	EUROPE_sc	EUROPE_tw	GEORGIA_sc	GEORGIA_tw	RUSSIA_sc	RUSSIA_tw	APENINE_sc	APENINE_tw
+
+HiC_scaffold_1	0.00146608	HiC_scaffold_1	5.17143e-05	HiC_scaffold_1	0.000279876	HiC_scaffold_1	0.000423312	HiC_scaffold_1	0.000237703	HiC_scaffold_1	1.84962e-05
+
+HiC_scaffold_1	0.00146608	HiC_scaffold_1	5.17143e-05	HiC_scaffold_1	0.000279876	HiC_scaffold_1	0.000423312	HiC_scaffold_1	0.000237703	HiC_scaffold_1	1.84962e-05
+
+Using R, diversity plot for each scaffold was obtained.
+
+```ruby
+########## Function to plot multiple plot at the same time ########## 
+multiplot <- function(..., plotlist=NULL, cols) {
+  require(grid)  
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)  
+  numPlots = length(plots) 
+  # Make the panel
+  plotCols = cols                          # Number of columns of plots
+  plotRows = ceiling(numPlots/plotCols) # Number of rows needed, calculated from # of cols  
+  # Set up the page
+  grid.newpage()
+  pushViewport(viewport(layout = grid.layout(plotRows, plotCols)))
+  vplayout <- function(x, y)
+    viewport(layout.pos.row = x, layout.pos.col = y) 
+  # Make each plot, in the correct location
+  for (i in 1:numPlots) {
+    curRow = ceiling(i/plotCols)
+    curCol = (i-1) %% plotCols + 1
+    print(plots[[i]], vp = vplayout(curRow, curCol ))
+  }  
+}
+########## Plot with loop and multiplot function ###############
+library(ggplot2)
+library(scales) ##ggplot scientific
+setwd("~/Desktop/Analysis/diversity/scaffolds_20210707/") #Folder includes theta watterson values for the first 37 scaffolds
+filelist = list.files(pattern = ".*.txt")
+scaflist = lapply(filelist, function(x)read.table(x, header=F)) 
+namelist = paste("Scaffold",1:37,sep="")
+col6=c("#0072B2","#56B4E9","#E69F00","#009E73","#CC79A7","#D55E00")
+myplots <- list()  # new empty list
+for (i in 1:37) {
+  p1 <- ggplot() + theme_classic() + geom_boxplot(data=scaflist[[i]], aes(x=V1, y=V2, fill=V1), outlier.shape=NA) + scale_y_continuous(limits = seq(0, 0.01, 0.005)) + scale_fill_manual(values=col6,labels = c("AK", "APN", "EUR","GEO", "RUS", "TUR")) + theme(axis.text.x = element_text(angle = 0, vjust = 1, size=5, hjust = 0.5)) + theme(axis.text.y = element_text(angle = 0, vjust = 1, size =5, hjust = 0.5)) + ggtitle(namelist[i]) + ylab(expression(paste(theta,"w"))) + xlab("") + theme(plot.title = element_text(hjust = 0.5, size=7, face="bold"), legend.position = "none") + scale_x_discrete(labels=c("AK", "APN", "EUR","GEO", "RUS", "TUR"))
+  myplots[[i]] <- p1  # add each plot into plot list
+}
+multiplot(plotlist = myplots, cols = 5) #Change cols according to your visualization
+```
+
+## Genome-wide Association Study
+
+```ruby
+# btr3.bamlist includes 30 individuals (13 migratory and 17 sedentary - BTR36 removed due to undetermined behavior)
+# btr3.ybin -> A file containing the case control status. 0 meaning migratory and 1 meaning sedentary. Check http://www.popgen.dk/angsd/index.php/Association for detailed information.
+~/bin/angsd/angsd -GL 1 -doAsso 4 -out results_association/wr -doMajorMinor 1 -doMaf 1 -bam btr3.bamlist -nThreads 8 -doPost 1 -yBin results_association/btr3.ybin -SNP_pval 1e-6 -minMaf 0.05 -minHigh 10 -doCounts 1 -minCount 3 -minMapQ 10 -minQ 20 -only_proper_pairs 1 -sites results_paralog/btr.site.list
+# Outputs are lrt0 and maf files. Our interest is lrt0 file. -999 values should be omitted, indicating no information. 
+# Sort lrt0 file based on LRT (log-likelihood ratios). Determine the significance value by chi-squared with one degree of freedom. Select the sites based on the significance value. 
+# Create top selected file (wr.top) including scaffold and site names. Perform genotyping for these determined sites with 90% posterior probability.
+~/bin/angsd/angsd -ref UrsMar_ASM334442v1_HiC_zoo.fasta -GL 1 -out results_association/wr_top90 -doGlf 2 -doMajorMinor 1 -doMaf 1 -bam btr3.bamlist -nThreads 8 -doGeno 5 -doPost 1 -postCutoff 0.90 -only_proper_pairs 1 -sites results_association/wr.top
+```
+
+R
+```ruby
+# btr3.bamlist includes 30 individuals (13 migratory and 17 sedentary - BTR36 removed due to undetermined behavior)
+# btr3.ybin -> A file containing the case control status. 0 meaning migratory and 1 meaning sedentary. Check http://www.popgen.dk/angsd/index.php/Association for detailed information.
+~/bin/angsd/angsd -GL 1 -doAsso 4 -out results_association/wr -doMajorMinor 1 -doMaf 1 -bam btr3.bamlist -nThreads 8 -doPost 1 -yBin results_association/btr3.ybin -SNP_pval 1e-6 -minMaf 0.05 -minHigh 10 -doCounts 1 -minCount 3 -minMapQ 10 -minQ 20 -only_proper_pairs 1 -sites results_paralog/btr.site.list
+# Outputs are lrt0 and maf files. Our interest is lrt0 file. -999 values should be omitted, indicating no information. 
+# Sort lrt0 file based on LRT (log-likelihood ratios). Determine the significance value by chi-squared with one degree of freedom. Select the sites based on the significance value. 
+# Create top selected file (wr.top) including scaffold and site names. Perform genotyping for these determined sites with 90% posterior probability.
+~/bin/angsd/angsd -ref UrsMar_ASM334442v1_HiC_zoo.fasta -GL 1 -out results_association/wr_top90 -doGlf 2 -doMajorMinor 1 -doMaf 1 -bam btr3.bamlist -nThreads 8 -doGeno 5 -doPost 1 -postCutoff 0.90 -only_proper_pairs 1 -sites results_association/wr.top
+```
+
+## Population branch statistics
+
+```ruby
+# PBS for European-Apenine-Turkey/Wild/Resident 
+~/bin/angsd/misc/realSFS results_sfs/${pop1}.saf.idx results_sfs/${pop2}.saf.idx -P 8 > results_fst/${pop1}_${pop2}.ml
+~/bin/angsd/misc/realSFS results_sfs/${pop1}.saf.idx results_sfs/${pop3}.saf.idx -P 8 > results_fst/${pop1}_${pop3}.ml
+ ~/bin/angsd/misc/realSFS results_sfs/${pop2}.saf.idx results_sfs/${pop3}.saf.idx -P 8 > results_fst/${pop2}_${pop3}.ml
+~/bin/angsd/misc/realSFS fst index results_sfs/${pop1}.saf.idx results_sfs/${pop2}.saf.idx results_sfs/${pop3}.saf.idx -fstout results_fst/${pop1}_${pop2}_${pop3}.pbs -sfs results_fst/${pop1}_${pop2}.ml -sfs results_fst/${pop1}_${pop3}.ml -sfs results_fst/${pop2}_${pop3}.ml
+#Window scan
+~/bin/angsd/misc/realSFS fst stats2 results_fst/${pop1}_${pop2}_${pop3}.pbs.fst.idx -P 8 -win 50000 -step 25000 > results_fst/${pop1}_${pop2}_${pop3}.pbs.txt
+```
+
+Asso-PBS-wrt file includes above values. We just checked the PBS values for the scanned windows includes previously found associated sites.
+
+→ AssociationSites	Nsites	Fst01_Tur	Fst02_Tur	Fst12_Tur	PBS2_Tur	Fst02_Sed	Fst12_Sed	PBS2_Sed	Fst02_Mig	Fst12_Mig	PBS2_Mig
+
+```ruby
+library(ggplot2)
+library(reshape2)
+########## PBS Plot ##########
+asso<-read.table("Asso-PBS-wrt",as.is=T,header=T)
+global_res = 0.084006
+global_mig = 0.081761
+global_tur = 0.055098
+
+asso1=matrix(0,nrow=nrow(asso),ncol=4)
+asso1[,1]=asso$AssociationSites
+asso1[,2]=asso$PBS2_Sed
+asso1[,3]=asso$PBS2_Mig
+asso1[,4]=asso$PBS2_Tur
+colnames(asso1)=c("Position","Sedentary", "Migratory","Turkey")
+asso1=as.data.frame(asso1)
+
+asso2 <- melt(data = asso1, id.vars = "Position")
+asso2$Position=factor(asso2$Position, levels = unique(asso2$Position))
+asso2$value = as.numeric(as.character(factor(asso2$value, levels = unique(asso2$value))))
+
+ggplot(asso2, aes(y=Position, x=value, color=variable, group=variable)) + theme_bw() + geom_point(aes(shape=variable, color=variable), size = 4, stroke = 1) + scale_shape_manual(values=c(15,16,3)) + theme(axis.text.x = element_text(angle = 0, vjust = 1, size =10, hjust = 0.5)) + theme(axis.text.y = element_text(angle = 0,size =10)) + scale_color_manual(values=col3, labels = c("Sedentary","Migratory","Turkey")) + theme(axis.text=element_text(size=10), axis.title=element_text(size=12,face="bold")) + xlab("PBS") + ylab("Positions") + geom_vline(xintercept=global_res,linetype="longdash",color="#CC79A7",size=1.5) + geom_vline(xintercept=global_mig,linetype="longdash",color="#0072B2",size=1.5) + geom_vline(xintercept=global_tur,linetype="longdash",color="#D55E00",size=1.5) + theme(legend.position = c(0.9, 0.92), legend.title = element_blank(), legend.background = element_rect(linetype="solid",colour="black"))
+```
 
 
 ```ruby
@@ -251,6 +380,12 @@ library(randomForest)
 ```
 
 
+```ruby
+library(caret)
+library(mlbench)
+library(randomForest)
+```
+
 
 ```ruby
 library(caret)
@@ -259,21 +394,11 @@ library(randomForest)
 ```
 
 
-
 ```ruby
 library(caret)
 library(mlbench)
 library(randomForest)
 ```
-
-
-
-```ruby
-library(caret)
-library(mlbench)
-library(randomForest)
-```
-
 
 
 ```ruby
