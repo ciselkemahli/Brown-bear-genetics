@@ -17,6 +17,7 @@ Most of the analysis were performed on bash environment. For this study, we will
 - [ANGSD - angsd](http://www.popgen.dk/angsd/index.php/ANGSD#Overview)
 - [ngsTools/TUTORIAL.md at master · mfumagalli/ngsTools · GitHub](https://github.com/mfumagalli/ngsTools/blob/master/TUTORIAL.md)
 - [PCAngsd - software](http://www.popgen.dk/software/index.php/PCAngsd)
+- ngsParalog 
 
 ### Reference Genome
 
@@ -29,29 +30,49 @@ https://www.dnazoo.org/assemblies/Ursus_americanus
 I added the bear sequence data from different studies. 
 
 1. Barlow et al. (2018) -> 3 *Ursus arctos* from Europe
+
 GEO1 -> Georgia, Great Caucasus
+
 RUS1 -> Balakhtinsky District, Russia
+
 SLO1 -> Hrusica, Slovenia
 
 2. Cahill et al. (2013) -> 7 *Ursus maritimus*, 2 *Ursus arctos*-Alaska
+
 AK1 -> F - Admiralty Island, Alaska
+
 AK2 -> F - Denali National Park, Alaska
+
 UM1 -> M - Lancaster Sound, USA (Smithsonian Natural History Museum)
+
 UM2 -> F - Wrangel Island, Russia (Wrangel Island State Nature Reserve)
+
 UM3 -> M - North Beaufort Sea, Canada (Canada Wildlife Service)
+
 UM4 -> M - Chukchi Sea, USA (US Fish and Wildlife Services)
+
 UM5 -> M - North Beaufort Sea, Canada (US Fish and Wildlife Services)
+
 UM6 -> M - West Hudson Bay, Canada (Canada Wildlife Service)
+
 UM7 -> F - West Hudson Bay, Canada (Canada Wildlife Service)
 
 3. Benazzo et al. (2017) -> 5 Italy Apenine mountains *Ursus arctos* population and 3 from Europe
+
 APN1 -> F - Central Italy
+
 APN2 -> M - Central Italy
+
 APN3 -> F - Central Italy
+
 APN4 -> M - Central Italy
+
 APN5 -> F - Central Italy
+
 GRE1 -> M - Greece
+
 GRE2 -> M - Greece
+
 SLK1 -> M - Slovakia
 
 Download the data from NCBI and aligned to *Ursus americanus* reference genome. All fastq files are formed using SRA toolkit.
@@ -263,9 +284,19 @@ library(randomForest)
 ## Referanslar
 
 Barlow, A., Cahill, J. A., Hartmann, S., Theunert, C., Xenikoudakis, G., Fortes, G. G., Paijmans, J. L., Rabeder, G., Frischauf, C., & Grandal-d’Anglade, A. (2018). Partial genomic survival of cave bears in living brown bears. Nature ecology & evolution, 2(10), 1563-1570.
+
 Benazzo, A., Trucchi, E., Cahill, J. A., Maisano Delser, P., Mona, S., Fumagalli, M., Bunnefeld, L., Cornetti, L., Ghirotto, S., & Girardi, M. (2017). Survival and divergence in a small group: The extraordinary genomic history of the endangered Apennine brown bear stragglers. Proceedings of the National Academy of Sciences, 114(45), E9589-E9597.
+
 Cahill, J. A., Green, R. E., Fulton, T. L., Stiller, M., Jay, F., Ovsyanikov, N., Salamzade, R., St. John, J., Stirling, I., & Slatkin, M. (2013). Genomic evidence for island population conversion resolves conflicting theories of polar bear evolution. PLoS genetics, 9(3), e1003345.
+
 Dudchenko, O., Batra, S. S., Omer, A. D., Nyquist, S. K., Hoeger, M., Durand, N. C., Shamim, M. S., Machol, I., Lander, E. S., & Aiden, A. P. (2017). De novo assembly of the Aedes aegypti genome using Hi-C yields chromosome-length scaffolds. science, 356(6333), 92-95.
+
 Dudchenko, O., Shamim, M. S., Batra, S. S., Durand, N. C., Musial, N. T., Mostofa, R., Pham, M., St Hilaire, B. G., Yao, W., & Stamenova, E. (2018). The Juicebox Assembly Tools module facilitates de novo assembly of mammalian genomes with chromosome-length scaffolds for under $1000. BioRxiv, 254797.
+
 Kopelman, N. M., Mayzel, J., Jakobsson, M., Rosenberg, N. A., & Mayrose, I. (2015). Clumpak: a program for identifying clustering modes and packaging population structure inferences across K. Molecular ecology resources, 15(5), 1179-1191.
+
 Srivastava, A., Kumar Sarsani, V., Fiddes, I., Sheehan, S. M., Seger, R. L., Barter, M. E., Neptune-Bear, S., Lindqvist, C., & Korstanje, R. (2019). Genome assembly and gene expression in the American black bear provides new insights into the renal response to hibernation. DNA Research, 26(1), 37-44.
+
+
+
+
