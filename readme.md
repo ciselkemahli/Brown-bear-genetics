@@ -85,7 +85,7 @@ Apennine population includes APN1, APN2, APN3, APN4 and APN5.
 
 ## Alignment to *Ursus americanus* ref-seq
 
-```ruby
+```bash
 #!/bin/bash
 #This script creates different shell scripts for each individuals to decrease the processing time. 
 
@@ -329,13 +329,20 @@ multiplot(plotlist = myplots, cols = 5) #Change cols according to your visualiza
 
 R
 ```R
-# PBS for European-Apenine-Turkey/Wild/Resident 
-~/bin/angsd/misc/realSFS results_sfs/${pop1}.saf.idx results_sfs/${pop2}.saf.idx -P 8 > results_fst/${pop1}_${pop2}.ml
-~/bin/angsd/misc/realSFS results_sfs/${pop1}.saf.idx results_sfs/${pop3}.saf.idx -P 8 > results_fst/${pop1}_${pop3}.ml
- ~/bin/angsd/misc/realSFS results_sfs/${pop2}.saf.idx results_sfs/${pop3}.saf.idx -P 8 > results_fst/${pop2}_${pop3}.ml
-~/bin/angsd/misc/realSFS fst index results_sfs/${pop1}.saf.idx results_sfs/${pop2}.saf.idx results_sfs/${pop3}.saf.idx -fstout results_fst/${pop1}_${pop2}_${pop3}.pbs -sfs results_fst/${pop1}_${pop2}.ml -sfs results_fst/${pop1}_${pop3}.ml -sfs results_fst/${pop2}_${pop3}.ml
-#Window scan
-~/bin/angsd/misc/realSFS fst stats2 results_fst/${pop1}_${pop2}_${pop3}.pbs.fst.idx -P 8 -win 50000 -step 25000 > results_fst/${pop1}_${pop2}_${pop3}.pbs.txt
+# Table includes genotypes as Anc, Der, Het and NN values for each individuals at each site. 
+########## Reading tables ########## 
+wr_geno=read.table("wr_90", header = T)
+wr <- melt(wr_geno, id.vars=c("Site","Code"))
+wr$Code = factor(wr$Code, levels = unique(wr$Code))
+wr$value = factor(wr$value, levels = unique(wr$value))
+ind_name=unique(wr[,3])
+position_name=unique(wr[,1])
+col3 = c("#E69F00","#0072B2","#999999","#009E73") #c("Het","Anc","NN","Der")
+g <- ggplot(wr, aes(x=Code, y=variable, fill=value))
+genplot = g + geom_tile(color=1, size=0.2) + scale_fill_manual(values=col3, labels = c("Het","Anc","NN","Der")) + guides(fill=guide_legend(title="Alleles")) + theme_classic() + theme(axis.text=element_text(size=10), axis.title=element_text(size=12,face="bold")) + theme(axis.text.x = element_text(angle = 60, vjust = 1, size = 10, hjust = 1)) + scale_y_discrete(name ="Individuals", labels=ind_name) + scale_x_discrete(name ="Position", labels=position_name)
+genplot
+grid.text("Migratory", x = unit(0.94, "npc"), y = unit(0.46, "npc"), rot=270,gp=gpar(fontsize=13))
+grid.text("Sedentary", x = unit(0.94, "npc"), y = unit(0.80, "npc"), rot=270,gp=gpar(fontsize=13))
 ```
 
 ## Population branch statistics
