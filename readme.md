@@ -86,6 +86,7 @@ Apennine population includes APN1, APN2, APN3, APN4 and APN5.
 ## Alignment to *Ursus americanus* ref-seq
 
 ```ruby
+#!/bin/bash
 #This script creates different shell scripts for each individuals to decrease the processing time. 
 
 pop=$1 #List includes the name of the individuals stated as in fastq files.
@@ -126,6 +127,7 @@ done
 ## Filters and Removing Paralogs
 
 ```ruby
+#!/bin/bash
 # First to determine paralogs we should have snp position file.
 	~/bin/angsd/angsd -GL 1 -ref UrsMar_ASM334442v1_HiC_zoo.fasta -out results_snp/btr.allsite -doMajorMinor 1 -doMaf 1 -minInd 28 -doCounts 1 -minMapQ 10 -minQ 20 -bam btr.bamlist -nThreads 10 -setMinDepth 220 -uniqueOnly 1 -remove_bads 1 -only_proper_pairs 1 -baq 2 -doGlf 2
 
@@ -148,6 +150,7 @@ done
 ## PCA (Principle Component Analysis)
 
 ```ruby
+#!/bin/bash
 # Output the genotype likelihoods to obtain beagle file for all brown bear individuals 
 ~/bin/angsd/angsd -GL 1 -ref UrsMar_ASM334442v1_HiC_zoo.fasta -out arctos -doGlf 2 -doMajorMinor 1 -doMaf 1 -bam ursusarctos.bamlist -nThreads 10 -minInd 22 -minMaf 0.05 -SNP_pval 1e-6 -minMapQ 10 -minQ 20 -setMinDepth 220 -doCounts 1 -uniqueOnly 1 -remove_bads 1 -baq 2 -only_proper_pairs 1 -sites results_paralog/btr.site.list
 
@@ -192,6 +195,7 @@ ggplot() + geom_point(data=PC, aes_string(x=x_axis, y=y_axis, color="Behavior"),
 ## Admixture Analysis
 
 ```ruby
+#!/bin/bash
 # Use the beagle file obtained grom genotype likelihood explained in the PCA part.
 
 n=$1    ### Number of replicates ###   30
@@ -245,6 +249,7 @@ k6plot
 ## Genetic diversity analysis
 
 ```ruby
+#!/bin/bash
 # Calculate saf files and the ML estimate of the sfs using the EM algorithm for each population
 # Populations used as bamlist are Europe, Apennine, Turkey, Georgia, Alaska, Russia
 
@@ -312,6 +317,7 @@ multiplot(plotlist = myplots, cols = 5) #Change cols according to your visualiza
 ## Genome-wide Association Study
 
 ```ruby
+#!/bin/bash
 # btr3.bamlist includes 30 individuals (13 migratory and 17 sedentary - BTR36 removed due to undetermined behavior)
 # btr3.ybin -> A file containing the case control status. 0 meaning migratory and 1 meaning sedentary. Check http://www.popgen.dk/angsd/index.php/Association for detailed information.
 ~/bin/angsd/angsd -GL 1 -doAsso 4 -out results_association/wr -doMajorMinor 1 -doMaf 1 -bam btr3.bamlist -nThreads 8 -doPost 1 -yBin results_association/btr3.ybin -SNP_pval 1e-6 -minMaf 0.05 -minHigh 10 -doCounts 1 -minCount 3 -minMapQ 10 -minQ 20 -only_proper_pairs 1 -sites results_paralog/btr.site.list
@@ -322,19 +328,20 @@ multiplot(plotlist = myplots, cols = 5) #Change cols according to your visualiza
 ```
 
 R
-```ruby
-# btr3.bamlist includes 30 individuals (13 migratory and 17 sedentary - BTR36 removed due to undetermined behavior)
-# btr3.ybin -> A file containing the case control status. 0 meaning migratory and 1 meaning sedentary. Check http://www.popgen.dk/angsd/index.php/Association for detailed information.
-~/bin/angsd/angsd -GL 1 -doAsso 4 -out results_association/wr -doMajorMinor 1 -doMaf 1 -bam btr3.bamlist -nThreads 8 -doPost 1 -yBin results_association/btr3.ybin -SNP_pval 1e-6 -minMaf 0.05 -minHigh 10 -doCounts 1 -minCount 3 -minMapQ 10 -minQ 20 -only_proper_pairs 1 -sites results_paralog/btr.site.list
-# Outputs are lrt0 and maf files. Our interest is lrt0 file. -999 values should be omitted, indicating no information. 
-# Sort lrt0 file based on LRT (log-likelihood ratios). Determine the significance value by chi-squared with one degree of freedom. Select the sites based on the significance value. 
-# Create top selected file (wr.top) including scaffold and site names. Perform genotyping for these determined sites with 90% posterior probability.
-~/bin/angsd/angsd -ref UrsMar_ASM334442v1_HiC_zoo.fasta -GL 1 -out results_association/wr_top90 -doGlf 2 -doMajorMinor 1 -doMaf 1 -bam btr3.bamlist -nThreads 8 -doGeno 5 -doPost 1 -postCutoff 0.90 -only_proper_pairs 1 -sites results_association/wr.top
+```R
+# PBS for European-Apenine-Turkey/Wild/Resident 
+~/bin/angsd/misc/realSFS results_sfs/${pop1}.saf.idx results_sfs/${pop2}.saf.idx -P 8 > results_fst/${pop1}_${pop2}.ml
+~/bin/angsd/misc/realSFS results_sfs/${pop1}.saf.idx results_sfs/${pop3}.saf.idx -P 8 > results_fst/${pop1}_${pop3}.ml
+ ~/bin/angsd/misc/realSFS results_sfs/${pop2}.saf.idx results_sfs/${pop3}.saf.idx -P 8 > results_fst/${pop2}_${pop3}.ml
+~/bin/angsd/misc/realSFS fst index results_sfs/${pop1}.saf.idx results_sfs/${pop2}.saf.idx results_sfs/${pop3}.saf.idx -fstout results_fst/${pop1}_${pop2}_${pop3}.pbs -sfs results_fst/${pop1}_${pop2}.ml -sfs results_fst/${pop1}_${pop3}.ml -sfs results_fst/${pop2}_${pop3}.ml
+#Window scan
+~/bin/angsd/misc/realSFS fst stats2 results_fst/${pop1}_${pop2}_${pop3}.pbs.fst.idx -P 8 -win 50000 -step 25000 > results_fst/${pop1}_${pop2}_${pop3}.pbs.txt
 ```
 
 ## Population branch statistics
 
 ```ruby
+#!/bin/bash
 # PBS for European-Apenine-Turkey/Wild/Resident 
 ~/bin/angsd/misc/realSFS results_sfs/${pop1}.saf.idx results_sfs/${pop2}.saf.idx -P 8 > results_fst/${pop1}_${pop2}.ml
 ~/bin/angsd/misc/realSFS results_sfs/${pop1}.saf.idx results_sfs/${pop3}.saf.idx -P 8 > results_fst/${pop1}_${pop3}.ml
@@ -380,32 +387,6 @@ library(randomForest)
 ```
 
 
-```ruby
-library(caret)
-library(mlbench)
-library(randomForest)
-```
-
-
-```ruby
-library(caret)
-library(mlbench)
-library(randomForest)
-```
-
-
-```ruby
-library(caret)
-library(mlbench)
-library(randomForest)
-```
-
-
-```ruby
-library(caret)
-library(mlbench)
-library(randomForest)
-```
 ## Referanslar
 
 Barlow, A., Cahill, J. A., Hartmann, S., Theunert, C., Xenikoudakis, G., Fortes, G. G., Paijmans, J. L., Rabeder, G., Frischauf, C., & Grandal-d’Anglade, A. (2018). Partial genomic survival of cave bears in living brown bears. Nature ecology & evolution, 2(10), 1563-1570.
