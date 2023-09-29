@@ -126,7 +126,7 @@ done
 
 ## Filters and Removing Paralogs
 
-```ruby
+```bash
 #!/bin/bash
 # First to determine paralogs we should have snp position file.
 	~/bin/angsd/angsd -GL 1 -ref UrsMar_ASM334442v1_HiC_zoo.fasta -out results_snp/btr.allsite -doMajorMinor 1 -doMaf 1 -minInd 28 -doCounts 1 -minMapQ 10 -minQ 20 -bam btr.bamlist -nThreads 10 -setMinDepth 220 -uniqueOnly 1 -remove_bads 1 -only_proper_pairs 1 -baq 2 -doGlf 2
@@ -149,7 +149,7 @@ done
 
 ## PCA (Principle Component Analysis)
 
-```ruby
+```bash
 #!/bin/bash
 # Output the genotype likelihoods to obtain beagle file for all brown bear individuals 
 ~/bin/angsd/angsd -GL 1 -ref UrsMar_ASM334442v1_HiC_zoo.fasta -out arctos -doGlf 2 -doMajorMinor 1 -doMaf 1 -bam ursusarctos.bamlist -nThreads 10 -minInd 22 -minMaf 0.05 -SNP_pval 1e-6 -minMapQ 10 -minQ 20 -setMinDepth 220 -doCounts 1 -uniqueOnly 1 -remove_bads 1 -baq 2 -only_proper_pairs 1 -sites results_paralog/btr.site.list
@@ -160,7 +160,7 @@ python ~/bin/pcangsd/pcangsd.py -beagle arctos.beagle.gz -o arctos -threads 10
 
 Using R, I plot the PCA plot.
 
-```ruby
+```R
 # PLOT PCA using covariance matrix and cluster file.
 library(ggplot2)
 ########## Read input file ##########
@@ -194,7 +194,7 @@ ggplot() + geom_point(data=PC, aes_string(x=x_axis, y=y_axis, color="Behavior"),
 
 ## Admixture Analysis
 
-```ruby
+```bash
 #!/bin/bash
 # Use the beagle file obtained grom genotype likelihood explained in the PCA part.
 
@@ -220,7 +220,7 @@ Using CLUMPAK (http://clumpak.tau.ac.il/bestK.html) (Kopelman et al., 2015), upl
 
 Using R, Admixture plot is plotted.
 
-```ruby
+```R
 ########## Packages to be used ########## 
 library(gridExtra)
 library(grid)
@@ -248,7 +248,7 @@ k6plot
 
 ## Genetic diversity analysis
 
-```ruby
+```bash
 #!/bin/bash
 # Calculate saf files and the ML estimate of the sfs using the EM algorithm for each population
 # Populations used as bamlist are Europe, Apennine, Turkey, Georgia, Alaska, Russia
@@ -276,7 +276,7 @@ HiC_scaffold_1	0.00146608	HiC_scaffold_1	5.17143e-05	HiC_scaffold_1	0.000279876	
 
 Using R, diversity plot for each scaffold was obtained.
 
-```ruby
+```R
 ########## Function to plot multiple plot at the same time ########## 
 multiplot <- function(..., plotlist=NULL, cols) {
   require(grid)  
@@ -316,7 +316,7 @@ multiplot(plotlist = myplots, cols = 5) #Change cols according to your visualiza
 
 ## Genome-wide Association Study
 
-```ruby
+```bash
 #!/bin/bash
 # btr3.bamlist includes 30 individuals (13 migratory and 17 sedentary - BTR36 removed due to undetermined behavior)
 # btr3.ybin -> A file containing the case control status. 0 meaning migratory and 1 meaning sedentary. Check http://www.popgen.dk/angsd/index.php/Association for detailed information.
@@ -347,7 +347,7 @@ grid.text("Sedentary", x = unit(0.94, "npc"), y = unit(0.80, "npc"), rot=270,gp=
 
 ## Population branch statistics
 
-```ruby
+```bash
 #!/bin/bash
 # PBS for European-Apenine-Turkey/Wild/Resident 
 ~/bin/angsd/misc/realSFS results_sfs/${pop1}.saf.idx results_sfs/${pop2}.saf.idx -P 8 > results_fst/${pop1}_${pop2}.ml
@@ -362,7 +362,7 @@ Asso-PBS-wrt file includes above values. We just checked the PBS values for the 
 
 → AssociationSites	Nsites	Fst01_Tur	Fst02_Tur	Fst12_Tur	PBS2_Tur	Fst02_Sed	Fst12_Sed	PBS2_Sed	Fst02_Mig	Fst12_Mig	PBS2_Mig
 
-```ruby
+```R
 library(ggplot2)
 library(reshape2)
 ########## PBS Plot ##########
@@ -387,7 +387,7 @@ ggplot(asso2, aes(y=Position, x=value, color=variable, group=variable)) + theme_
 ```
 
 
-```ruby
+```bash
 library(caret)
 library(mlbench)
 library(randomForest)
